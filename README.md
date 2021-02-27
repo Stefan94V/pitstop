@@ -1,4 +1,4 @@
-# Pitstop - Garage Management System
+# Pitstop - Garage Management System (With Dapr) 
 This repo contains a sample application based on a Garage Management System for Pitstop - a fictitious garage / car repair shop. The primary goal of this sample is to demonstrate several software-architecture concepts like:  
 * Microservices  
 * CQRS  
