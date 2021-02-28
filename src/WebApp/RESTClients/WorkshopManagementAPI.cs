@@ -91,23 +91,6 @@ namespace WebApp.RESTClients
 
         public async Task PlanMaintenanceJob(string planningDate, PlanMaintenanceJob cmd)
         {
-
-            var jsonData = new
-            {
-                cmd.Description,
-                cmd.VehicleInfo.LicenseNumber,
-                CustomerInfo = new {cmd.CustomerInfo.Id, cmd.CustomerInfo.Name, cmd.CustomerInfo.TelephoneNumber},
-                cmd.EndTime,
-                cmd.JobId,
-                cmd.StartTime,
-                VehicleInfo =  new {cmd.VehicleInfo.LicenseNumber, cmd.VehicleInfo.Brand, cmd.VehicleInfo.Type},
-                cmd.MessageId,
-                cmd.MessageType
-            };
-
-            var jsonString = JsonConvert.SerializeObject(jsonData);
-            _logger.LogError("Converting PLANNING: {JsonString}", jsonString);
-            
             await _daprClient.InvokeMethodAsync(
                 HttpMethod.Post,
                 WorkshopManagementApi_AppId,
