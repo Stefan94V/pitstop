@@ -51,6 +51,13 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
 
+  vehiclemanagementapi-dapr:
+    image: "daprio/daprd:latest"
+    command: ["./daprd", "-app-id", "vehiclemanagement-api", "-app-port", "5000"]
+    depends_on: 
+        - vehiclemanagementapi
+    network_mode: "service:vehiclemanagementapi"
+
   customermanagementapi:
     image: pitstop/customermanagementapi:1.0
     build: CustomerManagementAPI
@@ -62,6 +69,13 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
 
+  customermanagementapi-dapr:
+    image: "daprio/daprd:latest"
+    command: ["./daprd", "-app-id", "customermanagement-api", "-app-port", "5100"]
+    depends_on: 
+        - customermanagementapi
+    network_mode: "service:customermanagementapi"
+
   workshopmanagementapi:
     image: pitstop/workshopmanagementapi:1.0
     build: WorkshopManagementAPI
@@ -72,6 +86,13 @@ services:
       - "5200"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+
+  workshopmanagementapi-dapr:
+      image: "daprio/daprd:latest"
+      command: ["./daprd", "-app-id", "workshopmanagement-api", "-app-port", "5200"]
+      depends_on: 
+          - workshopmanagementapi
+      network_mode: "service:workshopmanagementapi"
 
   auditlogservice:
     image: pitstop/auditlogservice:1.0
@@ -135,6 +156,18 @@ services:
       - "7000:7000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+
+
+  webapp-dapr:
+    image: "daprio/daprd:latest"
+    command: ["./daprd", "-app-id", "webapp", "-app-port", "7000"]
+    depends_on: 
+        - customermanagementapi
+    network_mode: "service:webapp"
+  
+    
+
+
 
 volumes:
   sqlserverdata:

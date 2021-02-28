@@ -8,30 +8,40 @@ using System.Net;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using System;
+using System.Threading;
+using Dapr.Client;
+using Newtonsoft.Json;
 
 namespace WebApp.RESTClients
 {
     public class CustomerManagementAPI : ICustomerManagementAPI
     {
-        private ICustomerManagementAPI _restClient;
+        private readonly DaprClient _daprClient;
+        private const string CustomerManagementApi_AppId = "customermanagement-api";
+        private const string CustomerManagementApi_Path = "/api/customers";
 
-        public  CustomerManagementAPI(IConfiguration config, HttpClient httpClient)
+        public CustomerManagementAPI(DaprClient daprClient)
         {
-            string apiHostAndPort = config.GetSection("APIServiceLocations").GetValue<string>("CustomerManagementAPI");
-            httpClient.BaseAddress = new Uri($"http://{apiHostAndPort}/api");
-            _restClient = RestService.For<ICustomerManagementAPI>(httpClient);
+            _daprClient = daprClient;
         }
 
         public async Task<List<Customer>> GetCustomers()
         {
-            return await _restClient.GetCustomers();
+            return await _daprClient.InvokeMethodAsync<List<Customer>>(
+                HttpMethod.Get,
+                CustomerManagementApi_AppId,
+                CustomerManagementApi_Path
+            );
         }
 
-        public async Task<Customer> GetCustomerById([AliasAs("id")] string customerId)
+        public async Task<Customer> GetCustomerById(string customerId)
         {
             try
             {
-                return await _restClient.GetCustomerById(customerId);
+                return await _daprClient.InvokeMethodAsync<Customer>(
+                    HttpMethod.Get,
+                    CustomerManagementApi_AppId,
+                    $"{CustomerManagementApi_Path}/{customerId}");
             }
             catch (ApiException ex)
             {
@@ -48,7 +58,21 @@ namespace WebApp.RESTClients
 
         public async Task RegisterCustomer(RegisterCustomer command)
         {
-            await _restClient.RegisterCustomer(command);
+            await _daprClient.InvokeMethodAsync(
+                HttpMethod.Post,
+                CustomerManagementApi_AppId,
+                CustomerManagementApi_Path,
+                new
+                {
+                    command.CustomerId,
+                    command.Address,
+                    command.City,
+                    command.Name,
+                    command.EmailAddress,
+                    command.PostalCode,
+                    command.TelephoneNumber,
+                    command.MessageId
+                });
         }
     }
 }

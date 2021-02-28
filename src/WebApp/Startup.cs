@@ -25,12 +25,13 @@ namespace PitStop
             // Add framework services
             services
                 .AddMvc(options => options.EnableEndpointRouting = false)
+                .AddDapr()
                 .AddNewtonsoftJson();
 
             // add custom services
-            services.AddHttpClient<ICustomerManagementAPI, CustomerManagementAPI>();
-            services.AddHttpClient<IVehicleManagementAPI, VehicleManagementAPI>();
-            services.AddHttpClient<IWorkshopManagementAPI, WorkshopManagementAPI>();
+            services.AddSingleton<ICustomerManagementAPI, CustomerManagementAPI>();
+            services.AddSingleton<IVehicleManagementAPI, VehicleManagementAPI>();
+            services.AddSingleton<IWorkshopManagementAPI, WorkshopManagementAPI>();
 
             services.AddHealthChecks(checks =>
             {
