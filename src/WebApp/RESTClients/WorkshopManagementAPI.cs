@@ -8,36 +8,45 @@ using System;
 using System.Net;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http;
+using Dapr.Client;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace WebApp.RESTClients
 {
     public class WorkshopManagementAPI : IWorkshopManagementAPI
     {
-        private IWorkshopManagementAPI _restClient;
+        private readonly DaprClient _daprClient;
+        private readonly ILogger<WorkshopManagementAPI> _logger;
+        private const string WorkshopManagementApi_AppId = "workshopmanagement-api";
+        private const string WorkshopManagementApi_Path = "/api/WorkshopPlanning";
 
-        public WorkshopManagementAPI(IConfiguration config, HttpClient httpClient)
+        public WorkshopManagementAPI(DaprClient daprClient, ILogger<WorkshopManagementAPI> logger)
         {
-            string apiHostAndPort = config.GetSection("APIServiceLocations").GetValue<string>("WorkshopManagementAPI");
-            httpClient.BaseAddress = new Uri($"http://{apiHostAndPort}/api");
-            _restClient = RestService.For<IWorkshopManagementAPI>(httpClient);
+            _daprClient = daprClient;
+            _logger = logger;
         }
 
         public async Task<WorkshopPlanning> GetWorkshopPlanning(string planningDate)
         {
             try
             {
-                return await _restClient.GetWorkshopPlanning(planningDate);
+                return await _daprClient.InvokeMethodAsync<WorkshopPlanning>(
+                    HttpMethod.Get,
+                    WorkshopManagementApi_AppId,
+                    $"{WorkshopManagementApi_Path}/{planningDate}");
             }
-            catch (ApiException ex)
+            catch (InvocationException ex)
             {
-                if (ex.StatusCode == HttpStatusCode.NotFound)
+                if (ex.InnerException is HttpRequestException httpEx)
                 {
-                    return null;
+                    if (httpEx.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        return null;
+                    }
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
         }
 
@@ -45,72 +54,132 @@ namespace WebApp.RESTClients
         {
             try
             {
-                return await _restClient.GetMaintenanceJob(planningDate, jobId);
+                return await _daprClient.InvokeMethodAsync<MaintenanceJob>(
+                    HttpMethod.Get,
+                    WorkshopManagementApi_AppId,
+                    $"{WorkshopManagementApi_Path}/{planningDate}/jobs/{jobId}"
+                );
             }
-            catch (ApiException ex)
+            catch (InvocationException ex)
             {
-                if (ex.StatusCode == HttpStatusCode.NotFound)
+                if (ex.InnerException is HttpRequestException httpEx)
                 {
-                    return null;
+                    if (httpEx.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        return null;
+                    }
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
         }
 
         public async Task RegisterPlanning(string planningDate, RegisterPlanning cmd)
         {
-            await _restClient.RegisterPlanning(planningDate, cmd);
+            await _daprClient.InvokeMethodAsync(
+                HttpMethod.Post,
+                WorkshopManagementApi_AppId,
+                $"{WorkshopManagementApi_Path}/{planningDate}",
+                new
+                {
+                    cmd.PlanningDate,
+                    cmd.MessageId,
+                    cmd.MessageType
+                }
+            );
         }
 
         public async Task PlanMaintenanceJob(string planningDate, PlanMaintenanceJob cmd)
         {
-            await _restClient.PlanMaintenanceJob(planningDate, cmd);
+            await _daprClient.InvokeMethodAsync(
+                HttpMethod.Post,
+                WorkshopManagementApi_AppId,
+                $"{WorkshopManagementApi_Path}/{planningDate}/jobs",
+                new
+                {
+                    cmd.Description,
+                    cmd.VehicleInfo.LicenseNumber,
+                    CustomerInfo = new {cmd.CustomerInfo.Id, cmd.CustomerInfo.Name, cmd.CustomerInfo.TelephoneNumber},
+                    cmd.EndTime,
+                    cmd.JobId,
+                    cmd.StartTime,
+                    VehicleInfo =  new {cmd.VehicleInfo.LicenseNumber, cmd.VehicleInfo.Brand, cmd.VehicleInfo.Type},
+                    cmd.MessageId,
+                    cmd.MessageType
+                }
+            );
         }
-
         public async Task FinishMaintenanceJob(string planningDate, string jobId, FinishMaintenanceJob cmd)
         {
-            await _restClient.FinishMaintenanceJob(planningDate, jobId, cmd);
+            await _daprClient.InvokeMethodAsync(
+                HttpMethod.Put,
+                WorkshopManagementApi_AppId,
+                $"{WorkshopManagementApi_Path}/{planningDate}/jobs/{jobId}/finish",
+                new
+                {
+                    cmd.Notes,
+                    cmd.EndTime,
+                    cmd.JobId,
+                    cmd.StartTime,
+                    cmd.MessageId,
+                    cmd.MessageType
+                }
+            );
         }
 
         public async Task<List<Customer>> GetCustomers()
         {
-            return await _restClient.GetCustomers();
+            return await _daprClient.InvokeMethodAsync<List<Customer>>(
+                HttpMethod.Get,
+                WorkshopManagementApi_AppId,
+                $"/api/refdata/customers"
+            );
         }
 
         public async Task<Customer> GetCustomerById(string id)
         {
             try
             {
-                return await _restClient.GetCustomerById(id);
+                return await _daprClient.InvokeMethodAsync<Customer>(
+                    HttpMethod.Get,
+                    WorkshopManagementApi_AppId,
+                    $"/api/refdata/customers/{id}"
+                );
             }
-            catch (ApiException ex)
+            catch (InvocationException ex)
             {
-                if (ex.StatusCode == HttpStatusCode.NotFound)
+                if (ex.InnerException is HttpRequestException httpEx)
                 {
-                    return null;
+                    if (httpEx.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        return null;
+                    }
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
         }
 
         public async Task<List<Vehicle>> GetVehicles()
         {
-            return await _restClient.GetVehicles();
+            return await _daprClient.InvokeMethodAsync<List<Vehicle>>(
+                HttpMethod.Get,
+                WorkshopManagementApi_AppId,
+                $"/api//refdata/vehicles"
+            );
         }
 
-        public async Task<Vehicle> GetVehicleByLicenseNumber([AliasAs("id")] string licenseNumber)
+        public async Task<Vehicle> GetVehicleByLicenseNumber(string licenseNumber)
         {
             try
             {
-                return await _restClient.GetVehicleByLicenseNumber(licenseNumber);
+                return await _daprClient.InvokeMethodAsync<Vehicle>(
+                    HttpMethod.Get,
+                    WorkshopManagementApi_AppId,
+                    $"/api/refdata/vehicles/{licenseNumber}"
+                );
             }
-            catch (ApiException ex)
+            catch (HttpRequestException ex)
             {
                 if (ex.StatusCode == HttpStatusCode.NotFound)
                 {

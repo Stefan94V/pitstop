@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Pitstop.WorkshopManagementAPI.Repositories;
 using System;
 using System.Linq;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Pitstop.WorkshopManagementAPI.Commands;
 using Pitstop.WorkshopManagementAPI.Domain.Exceptions;
 using Pitstop.WorkshopManagementAPI.DTOs;
@@ -104,20 +106,22 @@ namespace Pitstop.WorkshopManagementAPI.Controllers
                         }
 
                         // return result
-                        return CreatedAtRoute("GetByDate", new { planningDate = planning.Id }, planning.MapToDTO());
+                        return CreatedAtRoute("GetByDate", new {planningDate = planning.Id}, planning.MapToDTO());
                     }
                     catch (BusinessRuleViolationException ex)
                     {
-                        return StatusCode(StatusCodes.Status409Conflict, new BusinessRuleViolation { ErrorMessage = ex.Message });
+                        return StatusCode(StatusCodes.Status409Conflict,
+                            new BusinessRuleViolation {ErrorMessage = ex.Message});
                     }
                 }
+
                 return BadRequest();
             }
             catch (ConcurrencyException)
             {
                 string errorMessage = "Unable to save changes. " +
-                    "Try again, and if the problem persists " +
-                    "see your system administrator.";
+                                      "Try again, and if the problem persists " +
+                                      "see your system administrator.";
                 Log.Error(errorMessage);
                 ModelState.AddModelError("ErrorMessage", errorMessage);
                 return StatusCode(StatusCodes.Status500InternalServerError);
@@ -145,13 +149,14 @@ namespace Pitstop.WorkshopManagementAPI.Controllers
                     // return result
                     return Ok();
                 }
+
                 return BadRequest();
             }
             catch (ConcurrencyException)
             {
                 string errorMessage = "Unable to save changes. " +
-                    "Try again, and if the problem persists " +
-                    "see your system administrator.";
+                                      "Try again, and if the problem persists " +
+                                      "see your system administrator.";
                 Log.Error(errorMessage);
                 ModelState.AddModelError("", errorMessage);
                 return StatusCode(StatusCodes.Status500InternalServerError);

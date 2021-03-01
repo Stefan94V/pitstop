@@ -10,6 +10,8 @@ using Pitstop.CustomerManagementAPI.Commands;
 using Pitstop.CustomerManagementAPI.Mappers;
 using Serilog;
 using System;
+using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace Pitstop.Application.CustomerManagementAPI.Controllers
 {
@@ -19,7 +21,9 @@ namespace Pitstop.Application.CustomerManagementAPI.Controllers
         IMessagePublisher _messagePublisher;
         CustomerManagementDBContext _dbContext;
 
-        public CustomersController(CustomerManagementDBContext dbContext, IMessagePublisher messagePublisher)
+        public CustomersController(
+            CustomerManagementDBContext dbContext,
+            IMessagePublisher messagePublisher)
         {
             _dbContext = dbContext;
             _messagePublisher = messagePublisher;
@@ -40,6 +44,7 @@ namespace Pitstop.Application.CustomerManagementAPI.Controllers
             {
                 return NotFound();
             }
+
             return Ok(customer);
         }
 
@@ -52,23 +57,25 @@ namespace Pitstop.Application.CustomerManagementAPI.Controllers
                 {
                     // insert customer
                     Customer customer = command.MapToCustomer();
+
                     _dbContext.Customers.Add(customer);
                     await _dbContext.SaveChangesAsync();
 
                     // send event
                     CustomerRegistered e = command.MapToCustomerRegistered();
-                    await _messagePublisher.PublishMessageAsync(e.MessageType, e , "");
+                    await _messagePublisher.PublishMessageAsync(e.MessageType, e, "");
 
                     // return result
-                    return CreatedAtRoute("GetByCustomerId", new { customerId = customer.CustomerId }, customer);
+                    return CreatedAtRoute("GetByCustomerId", new {customerId = customer.CustomerId}, customer);
                 }
+
                 return BadRequest();
             }
             catch (DbUpdateException)
             {
                 ModelState.AddModelError("", "Unable to save changes. " +
-                    "Try again, and if the problem persists " +
-                    "see your system administrator.");
+                                             "Try again, and if the problem persists " +
+                                             "see your system administrator.");
                 return StatusCode(StatusCodes.Status500InternalServerError);
                 throw;
             }

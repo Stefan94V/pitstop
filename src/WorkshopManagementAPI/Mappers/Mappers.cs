@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Pitstop.WorkshopManagementAPI.Commands;
 using Pitstop.WorkshopManagementAPI.Domain.Entities;
+using Pitstop.WorkshopManagementAPI.Domain.ValueObjects;
 using Pitstop.WorkshopManagementAPI.Events;
 using Pitstop.WorkshopManagementAPI.DTOs;
 
