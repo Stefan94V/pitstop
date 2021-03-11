@@ -6,8 +6,8 @@ namespace Pitstop.Infrastructure.Messaging
 {
     public class Message
     {
-        public readonly Guid MessageId;
-        public readonly string MessageType;
+        public Guid MessageId { get; private set; }
+        public string MessageType { get; private set; }
 
         public Message() : this(Guid.NewGuid())
         {

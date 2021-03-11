@@ -2,16 +2,27 @@ version: '3'
 services:
 
   rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    volumes:
-      - rabbitmqdata:/var/lib/rabbitmq
+    image: rabbitmq:3-management-alpine
     ports:
-      - "15672:15672"
-      - "5672:5672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=rabbitmquser
-      - RABBITMQ_DEFAULT_PASS=DEBmbwkSrzy9D1T9cJfa
+          - "5672:5672"
+          - "15672:15672"
+  zipkin:
+    image: openzipkin/zipkin-slim
+    ports:
+        - "5411:9411"
+
+
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   container_name: rabbitmq
+  #   volumes:
+  #     - rabbitmqdata:/var/lib/rabbitmq
+  #   ports:
+  #     - "15672:15672"
+  #     - "5672:5672"
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=rabbitmquser
+  #     - RABBITMQ_DEFAULT_PASS=DEBmbwkSrzy9D1T9cJfa
       
   sqlserver:
     image: microsoft/mssql-server-linux:latest
@@ -42,7 +53,9 @@ services:
 
   vehiclemanagementapi:
     image: pitstop/vehiclemanagementapi:1.0
-    build: VehicleManagementAPI
+    build: 
+      context: .
+      dockerfile: VehicleManagementAPI/Dockerfile
     depends_on:
       - rabbitmq
       - sqlserver
@@ -53,14 +66,23 @@ services:
 
   vehiclemanagementapi-dapr:
     image: "daprio/daprd:latest"
-    command: ["./daprd", "-app-id", "vehiclemanagement-api", "-app-port", "5000"]
+    command: ["./daprd", 
+    "-app-id", "vehiclemanagement-api", 
+    "-app-port", "5000",
+    "-components-path", "/components",
+    "-config", "/configuration/pitstop-config.yaml"]
     depends_on: 
         - vehiclemanagementapi
     network_mode: "service:vehiclemanagementapi"
+    volumes:
+      - "./dapr/components/:/components"
+      - "./dapr/configuration/:/configuration"
 
   customermanagementapi:
     image: pitstop/customermanagementapi:1.0
-    build: CustomerManagementAPI
+    build: 
+      context: .
+      dockerfile: CustomerManagementAPI/Dockerfile
     depends_on:
       - rabbitmq
       - sqlserver
@@ -71,14 +93,23 @@ services:
 
   customermanagementapi-dapr:
     image: "daprio/daprd:latest"
-    command: ["./daprd", "-app-id", "customermanagement-api", "-app-port", "5100"]
+    command: ["./daprd", 
+    "-app-id", "customermanagement-api", 
+    "-app-port", "5100",
+    "-components-path", "/components",
+    "-config", "/configuration/pitstop-config.yaml"]
     depends_on: 
         - customermanagementapi
     network_mode: "service:customermanagementapi"
+    volumes:
+      - "./dapr/components/:/components"
+      - "./dapr/configuration/:/configuration"
 
   workshopmanagementapi:
     image: pitstop/workshopmanagementapi:1.0
-    build: WorkshopManagementAPI
+    build: 
+      context: .
+      dockerfile: WorkshopManagementAPI/Dockerfile
     depends_on:
       - rabbitmq
       - sqlserver
@@ -88,61 +119,137 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
 
   workshopmanagementapi-dapr:
-      image: "daprio/daprd:latest"
-      command: ["./daprd", "-app-id", "workshopmanagement-api", "-app-port", "5200"]
-      depends_on: 
+    image: "daprio/daprd:latest"
+    command: ["./daprd", 
+    "-app-id", "workshopmanagement-api", 
+    "-app-port", "5200",
+    "-components-path", "/components",
+    "-config", "/configuration/pitstop-config.yaml"]
+    depends_on: 
           - workshopmanagementapi
-      network_mode: "service:workshopmanagementapi"
+    network_mode: "service:workshopmanagementapi"
+    volumes:
+      - "./dapr/components/:/components"
+      - "./dapr/configuration/:/configuration"
 
-  auditlogservice:
-    image: pitstop/auditlogservice:1.0
-    build: AuditlogService
-    container_name: auditlogservice
-    depends_on:
-      - rabbitmq
-    environment:
-      - DOTNET_ENVIRONMENT=Production
+  # auditlogservice:
+  #   image: pitstop/auditlogservice:1.0
+  #   build: AuditlogService
+  #   container_name: auditlogservice
+  #   depends_on:
+  #     - rabbitmq
+  #   environment:
+  #     - DOTNET_ENVIRONMENT=Production
 
   invoiceservice:
     image: pitstop/invoiceservice:1.0
-    build: InvoiceService
-    container_name: invoiceservice
+    build: 
+      context: .
+      dockerfile: InvoiceService/Dockerfile
     depends_on:
       - rabbitmq
       - sqlserver
       - mailserver
+    ports:
+      - "5260"
     environment:
       - DOTNET_ENVIRONMENT=Production
+
+  invoiceservice-dapr:
+    image: "daprio/daprd:latest"
+    command: ["./daprd", 
+    "-app-id", "invoiceservice-api", 
+    "-app-port", "5260",
+    "-components-path", "/components",
+    "-config", "/configuration/pitstop-config.yaml"]
+    depends_on: 
+        - invoiceservice
+    network_mode: "service:invoiceservice"
+    volumes:
+      - "./dapr/components/:/components"
+      - "./dapr/configuration/:/configuration"
 
   notificationservice:
     image: pitstop/notificationservice:1.0
-    build: NotificationService
-    container_name: notificationservice
+    build: 
+      context: .
+      dockerfile: NotificationService/Dockerfile
     depends_on:
       - rabbitmq
       - sqlserver
       - mailserver
+    ports:
+      - "5270"
     environment:
       - DOTNET_ENVIRONMENT=Production
 
-  timeservice:
-    image: pitstop/timeservice:1.0
-    build: TimeService
-    container_name: timeservice
-    depends_on:
-      - rabbitmq
-    environment:
-      - DOTNET_ENVIRONMENT=Production
+  notificationservice-dapr:
+    image: "daprio/daprd:latest"
+    command: ["./daprd", 
+    "-app-id", "notificationservice-api", 
+    "-app-port", "5270",
+    "-components-path", "/components",
+    "-config", "/configuration/pitstop-config.yaml"]
+    depends_on: 
+        - notificationservice
+    network_mode: "service:notificationservice"
+    volumes:
+      - "./dapr/components/:/components"
+      - "./dapr/configuration/:/configuration"
+
+
+  # timeservice:
+  #   image: pitstop/timeservice:1.0
+  #   build: 
+  #     context: .
+  #     dockerfile: TimeService/Dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   # ports: 
+  #   #  - "8800"
+  #   environment:
+  #     - DOTNET_ENVIRONMENT=Production
+
+  # timeservice-dapr:
+  #   image: "daprio/daprd:latest"
+  #   command: ["./daprd", 
+  #     "-app-id", "timeservice-worker", 
+  #     # "-app-port", "8800",
+  #     "-components-path", "/components",
+  #     "-config", "/configuration/pitstop-config.yaml"]
+  #   depends_on: 
+  #     - timeservice
+  #   network_mode: "service:timeservice"
+  #   volumes:
+  #     - "./dapr/components/:/components"
+  #     - "./dapr/configuration/:/configuration"
 
   workshopmanagementeventhandler:
     image: pitstop/workshopmanagementeventhandler:1.0
-    build: WorkshopManagementEventHandler
-    container_name: workshopmanagementeventhandler
+    build: 
+      context: .
+      dockerfile: WorkshopManagementEventHandler/Dockerfile
     depends_on:
       - rabbitmq
       - sqlserver
+    ports:
+      - "5250"
     environment:
       - DOTNET_ENVIRONMENT=Production
+
+  workshopmanagementeventhandler-dapr:
+    image: "daprio/daprd:latest"
+    command: ["./daprd", 
+    "-app-id", "workshopmanagementevent-handler", 
+    "-app-port", "5250", 
+    "-components-path", "/components", 
+    "-config", "/configuration/pitstop-config.yaml"]
+    depends_on: 
+        - workshopmanagementeventhandler
+    network_mode: "service:workshopmanagementeventhandler"
+    volumes:
+      - "./dapr/components/:/components"
+      - "./dapr/configuration/:/configuration"
 
   webapp:
     image: pitstop/webapp:1.0
@@ -160,13 +267,18 @@ services:
 
   webapp-dapr:
     image: "daprio/daprd:latest"
-    command: ["./daprd", "-app-id", "webapp", "-app-port", "7000"]
+    command: ["./daprd", 
+    "-app-id", "webapp", 
+    "-app-port", "7000",
+    "-components-path", "/components",
+    "-config", "/configuration/pitstop-config.yaml"]
     depends_on: 
         - customermanagementapi
     network_mode: "service:webapp"
+    volumes:
+      - "./dapr/components/:/components"
+      - "./dapr/configuration/:/configuration"
   
-    
-
 
 
 volumes:

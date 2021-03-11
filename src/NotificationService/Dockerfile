@@ -1,17 +1,26 @@
 FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build-env
 WORKDIR /app
 
-# Copy necessary files and restore as distinct layer
-COPY *.csproj ./
-RUN dotnet restore
+# Copy necessary files
+COPY Infrastructure.Messaging/Infrastructure.Messaging.csproj ./Infrastructure.Messaging
+RUN dotnet restore Infrastructure.Messaging
+
+# Copy and restore explicit project
+COPY NotificationService/NotificationService.csproj ./NotificationService
+
+RUN dotnet restore NotificationService
 
 # Copy everything else and build
 COPY . ./
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -c Release -o out NotificationService
 
-# Build runtime image
-FROM mcr.microsoft.com/dotnet/runtime:5.0-focal
+FROM mcr.microsoft.com/dotnet/aspnet:5.0-focal
 COPY --from=build-env /app/out .
+
+# Expose ports
+EXPOSE 5270/tcp
+ENV ASPNETCORE_URLS http://*:5270
+#HEALTHCHECK --interval=30s --timeout=3s --retries=1 CMD curl --silent --fail http://localhost:5250/hc || exit 1
 
 # Start
 ENTRYPOINT ["dotnet", "Pitstop.NotificationService.dll"]

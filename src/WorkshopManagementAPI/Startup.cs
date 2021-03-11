@@ -10,7 +10,6 @@ using Microsoft.Extensions.HealthChecks;
 using WorkshopManagementAPI.CommandHandlers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Pitstop.Infrastructure.Messaging.Configuration;
 
 namespace Pitstop.WorkshopManagementAPI
 {
@@ -36,7 +35,8 @@ namespace Pitstop.WorkshopManagementAPI
             services.AddTransient<ICustomerRepository>((sp) => new SqlServerRefDataRepository(workshopManagementConnectionString));
 
             // add messagepublisher
-            services.UseRabbitMQMessagePublisher(_configuration);
+            services.AddScoped<IMessagePublisher, DaprMessagePublisher>();
+
 
             // add commandhandlers
             services.AddCommandHandlers();
@@ -44,6 +44,7 @@ namespace Pitstop.WorkshopManagementAPI
             // Add framework services.
             services
                 .AddMvc((options) => options.EnableEndpointRouting = false)
+                .AddDapr()
                 .AddNewtonsoftJson();
 
             // Register the Swagger generator, defining one or more Swagger documents
@@ -71,6 +72,7 @@ namespace Pitstop.WorkshopManagementAPI
             app.UseMvc();
             app.UseDefaultFiles();
             app.UseStaticFiles();
+            app.UseCloudEvents();
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();

@@ -137,7 +137,7 @@ namespace Pitstop.WorkshopManagementAPI.Repositories
                                 Id = planningId, 
                                 NewVersion = eventVersion,
                                 Timestamp = DateTime.Now,
-                                MessageType = e.MessageType,
+                                MessageType = e.GetType().Name,
                                 EventData = SerializeEventData(e) 
                             }, transaction);
                     }

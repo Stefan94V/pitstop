@@ -7,12 +7,11 @@ namespace Pitstop.WorkshopManagementEventHandler.Events
 {
     public class CustomerRegistered : Event
     {
-        public readonly string CustomerId;
-        public readonly string Name;
-        public readonly string TelephoneNumber;
+        public string CustomerId { get; private set; }
+        public string Name { get; private set; }
+        public string TelephoneNumber { get; private set; }
 
-        public CustomerRegistered(Guid messageId, string customerId, string name, string telephoneNumber) : 
-            base(messageId)
+        public CustomerRegistered(string customerId, string name, string telephoneNumber) 
         {
             CustomerId = customerId;
             Name = name;

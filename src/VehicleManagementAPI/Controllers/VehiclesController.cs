@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Pitstop.Application.VehicleManagement.Model;
 using Pitstop.Application.VehicleManagement.DataAccess;
@@ -18,12 +19,14 @@ namespace Pitstop.Application.VehicleManagement.Controllers
     {
         private const string NUMBER_PATTERN = @"^((\d{1,3}|[a-z]{1,3})-){2}(\d{1,3}|[a-z]{1,3})$";
         IMessagePublisher _messagePublisher;
+        private readonly ILogger<VehiclesController> _logger;
         VehicleManagementDBContext _dbContext;
 
-        public VehiclesController(VehicleManagementDBContext dbContext, IMessagePublisher messagePublisher)
+        public VehiclesController(VehicleManagementDBContext dbContext, IMessagePublisher messagePublisher, ILogger<VehiclesController> _logger)
         {
             _dbContext = dbContext;
             _messagePublisher = messagePublisher;
+            this._logger = _logger;
         }
 
         [HttpGet]
@@ -64,9 +67,19 @@ namespace Pitstop.Application.VehicleManagement.Controllers
                     _dbContext.Vehicles.Add(vehicle);
                     await _dbContext.SaveChangesAsync();
 
-                    // send event
-                    var e = VehicleRegistered.FromCommand(command);
-                    await _messagePublisher.PublishMessageAsync(e.MessageType, e, "");
+                    try
+                    {
+
+                        // send event
+                        var e = VehicleRegistered.FromCommand(command);
+                        await _messagePublisher.PublishMessageAsync(e);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogCritical(ex, "Could not publish");
+                        if(ex.InnerException != null)
+                            _logger.LogCritical(ex.InnerException,"Could not publish in dapr" );
+                    }
 
                     //return result
                     return CreatedAtRoute("GetByLicenseNumber", new {licenseNumber = vehicle.LicenseNumber}, vehicle);

@@ -7,13 +7,12 @@ namespace Pitstop.WorkshopManagementEventHandler.Events
 {
     public class MaintenanceJobFinished : Event
     {
-        public readonly Guid JobId;
-        public readonly DateTime StartTime;
-        public readonly DateTime EndTime;
-        public readonly string Notes;
+        public Guid JobId { get; private set; }
+        public DateTime StartTime { get; private set; }
+        public DateTime EndTime { get; private set; }
+        public string Notes { get; private set; }
 
-        public MaintenanceJobFinished(Guid messageId, Guid jobId, DateTime startTime, DateTime endTime, string notes) : 
-            base(messageId)
+        public MaintenanceJobFinished(Guid jobId, DateTime startTime, DateTime endTime, string notes) 
         {
             JobId = jobId;
             StartTime = startTime;

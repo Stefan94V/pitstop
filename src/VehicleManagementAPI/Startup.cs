@@ -10,7 +10,7 @@ using Serilog;
 using Microsoft.Extensions.HealthChecks;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Hosting;
-using Pitstop.Infrastructure.Messaging.Configuration;
+using Dapr;
 
 namespace Pitstop.Application.VehicleManagement
 {
@@ -31,11 +31,12 @@ namespace Pitstop.Application.VehicleManagement
             services.AddDbContext<VehicleManagementDBContext>(options => options.UseSqlServer(sqlConnectionString));
 
             // add messagepublisher
-            services.UseRabbitMQMessagePublisher(_configuration);
+            services.AddScoped<IMessagePublisher, DaprMessagePublisher>();
 
             // Add framework services.
             services
                 .AddMvc(options => options.EnableEndpointRouting = false)
+                .AddDapr()
                 .AddNewtonsoftJson();
 
             // Register the Swagger generator, defining one or more Swagger documents
@@ -62,6 +63,7 @@ namespace Pitstop.Application.VehicleManagement
             app.UseMvc();
             app.UseDefaultFiles();
             app.UseStaticFiles();
+            app.UseCloudEvents();
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();

@@ -7,9 +7,9 @@ namespace Pitstop.WorkshopManagementAPI.Events
 {
     public class WorkshopPlanningCreated : Event
     {
-        public readonly DateTime Date;
+        public DateTime Date { get; private set; }
 
-        public WorkshopPlanningCreated(Guid messageId, DateTime date) : base(messageId)
+        public WorkshopPlanningCreated(DateTime date) 
         {
             Date = date;
         }

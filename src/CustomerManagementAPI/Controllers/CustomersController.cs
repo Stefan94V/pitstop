@@ -11,7 +11,9 @@ using Pitstop.CustomerManagementAPI.Mappers;
 using Serilog;
 using System;
 using System.IO;
+using Dapr.Client;
 using Microsoft.Extensions.Logging;
+using ILogger = Serilog.ILogger;
 
 namespace Pitstop.Application.CustomerManagementAPI.Controllers
 {
@@ -19,14 +21,17 @@ namespace Pitstop.Application.CustomerManagementAPI.Controllers
     public class CustomersController : Controller
     {
         IMessagePublisher _messagePublisher;
+        private readonly ILogger<CustomersController> _logger;
         CustomerManagementDBContext _dbContext;
 
         public CustomersController(
             CustomerManagementDBContext dbContext,
-            IMessagePublisher messagePublisher)
+            IMessagePublisher messagePublisher,
+            ILogger<CustomersController> logger)
         {
             _dbContext = dbContext;
             _messagePublisher = messagePublisher;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -55,6 +60,10 @@ namespace Pitstop.Application.CustomerManagementAPI.Controllers
             {
                 if (ModelState.IsValid)
                 {
+                    // Polly seems to create multiple when retrying
+                    if (await _dbContext.Customers.AnyAsync(x => x.EmailAddress == command.EmailAddress))
+                        return BadRequest("Email already has an account");
+                    
                     // insert customer
                     Customer customer = command.MapToCustomer();
 
@@ -63,7 +72,14 @@ namespace Pitstop.Application.CustomerManagementAPI.Controllers
 
                     // send event
                     CustomerRegistered e = command.MapToCustomerRegistered();
-                    await _messagePublisher.PublishMessageAsync(e.MessageType, e, "");
+                    try
+                    {
+                        await _messagePublisher.PublishMessageAsync(e);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Could not publish");
+                    }
 
                     // return result
                     return CreatedAtRoute("GetByCustomerId", new {customerId = customer.CustomerId}, customer);

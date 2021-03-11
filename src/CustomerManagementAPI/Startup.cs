@@ -4,12 +4,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Pitstop.CustomerManagementAPI.DataAccess;
-using Pitstop.Infrastructure.Messaging.Configuration;
 using System;
 using Serilog;
 using Microsoft.Extensions.HealthChecks;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Hosting;
+using Pitstop.Infrastructure.Messaging;
 
 namespace Pitstop.CustomerManagementAPI
 {
@@ -30,11 +30,12 @@ namespace Pitstop.CustomerManagementAPI
             services.AddDbContext<CustomerManagementDBContext>(options => options.UseSqlServer(sqlConnectionString));
 
             // add messagepublisher
-            services.UseRabbitMQMessagePublisher(_configuration);
-
+            services.AddScoped<IMessagePublisher, DaprMessagePublisher>();
+            
             // Add framework services
             services
                 .AddMvc(options => options.EnableEndpointRouting = false)
+                .AddDapr()
                 .AddNewtonsoftJson();
 
             // Register the Swagger generator, defining one or more Swagger documents
@@ -59,6 +60,8 @@ namespace Pitstop.CustomerManagementAPI
                 .CreateLogger();
 
             app.UseMvc();
+            app.UseRouting();
+            app.UseCloudEvents();
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
@@ -70,7 +73,6 @@ namespace Pitstop.CustomerManagementAPI
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "CustomerManagement API - v1");
             });
-
             // auto migrate db
             using (var scope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {

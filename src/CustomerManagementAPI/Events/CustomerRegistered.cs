@@ -8,16 +8,16 @@ namespace Pitstop.CustomerManagementAPI.Events
 {
     public class CustomerRegistered : Event
     {
-        public readonly string CustomerId;
-        public readonly string Name;
-        public readonly string Address;
-        public readonly string PostalCode;
-        public readonly string City;
-        public readonly string TelephoneNumber;
-        public readonly string EmailAddress;
+        public string CustomerId { get; private set; }
+        public string Name { get; private set; }
+        public string Address { get; private set; }
+        public string PostalCode { get; private set; }
+        public string City { get; private set; }
+        public string TelephoneNumber { get; private set; }
+        public string EmailAddress { get; private set; }
 
-        public CustomerRegistered(Guid messageId, string customerId, string name, string address, string postalCode, string city,
-            string telephoneNumber, string emailAddress) : base(messageId)
+        public CustomerRegistered(string customerId, string name, string address, string postalCode, string city,
+            string telephoneNumber, string emailAddress)
         {
             CustomerId = customerId;
             Name = name;

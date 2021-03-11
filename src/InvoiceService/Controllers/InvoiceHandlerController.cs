@@ -1,79 +1,43 @@
-﻿using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json.Linq;
+using System;
+using System.Linq;
+using System.Net.Mail;
+using System.Net.Mime;
+using System.Text;
+using System.Threading.Tasks;
+using Dapr;
+using Microsoft.AspNetCore.Mvc;
 using Pitstop.Infrastructure.Messaging;
 using Pitstop.InvoiceService.CommunicationChannels;
 using Pitstop.InvoiceService.Events;
 using Pitstop.InvoiceService.Model;
 using Pitstop.InvoiceService.Repositories;
 using Serilog;
-using System;
-using System.Linq;
-using System.Net.Mail;
-using System.Net.Mime;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Pitstop.InvoiceService
+namespace Pitstop.InvoiceService.Controllers
 {
-    public class InvoiceManager : IHostedService, IMessageHandlerCallback
+    [Route("/api/[controller]")]
+    [ApiController]
+    public class InvoiceHandlerController : ControllerBase
     {
+        private const string DaprSubName = "pubsub";
         private const decimal HOURLY_RATE = 18.50M;
         private IMessageHandler _messageHandler;
         private IInvoiceRepository _repo;
         private IEmailCommunicator _emailCommunicator;
 
-        public InvoiceManager(IMessageHandler messageHandler, IInvoiceRepository repo, IEmailCommunicator emailCommunicator)
+        public InvoiceHandlerController(IMessageHandler messageHandler, IInvoiceRepository repo,
+            IEmailCommunicator emailCommunicator)
         {
             _messageHandler = messageHandler;
             _repo = repo;
             _emailCommunicator = emailCommunicator;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        [HttpPost("CustomerRegistered")]
+        [Topic(DaprSubName, "CustomerRegistered")]
+        public async Task HandleAsync(CustomerRegistered cr)
         {
-            _messageHandler.Start(this);
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            _messageHandler.Stop();
-            return Task.CompletedTask;
-        }
-
-        public async Task<bool> HandleMessageAsync(string messageType, string message)
-        {
-            try
-            {
-                JObject messageObject = MessageSerializer.Deserialize(message);
-                switch (messageType)
-                {
-                    case "CustomerRegistered":
-                        await HandleAsync(messageObject.ToObject<CustomerRegistered>());
-                        break;
-                    case "MaintenanceJobPlanned":
-                        await HandleAsync(messageObject.ToObject<MaintenanceJobPlanned>());
-                        break;
-                    case "MaintenanceJobFinished":
-                        await HandleAsync(messageObject.ToObject<MaintenanceJobFinished>());
-                        break;
-                    case "DayHasPassed":
-                        await HandleAsync(messageObject.ToObject<DayHasPassed>());
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, $"Error while handling {messageType} event.");
-            }
-
-            return true;
-        }
-
-        private async Task HandleAsync(CustomerRegistered cr)
-        {
-            Log.Information("Register customer: {Id}, {Name}, {Address}, {PostalCode}, {City}", 
+            Log.Information("Register customer: {Id}, {Name}, {Address}, {PostalCode}, {City}",
                 cr.CustomerId, cr.Name, cr.Address, cr.PostalCode, cr.City);
 
             Customer customer = new Customer
@@ -88,9 +52,11 @@ namespace Pitstop.InvoiceService
             await _repo.RegisterCustomerAsync(customer);
         }
 
-        private async Task HandleAsync(MaintenanceJobPlanned mjp)
+        [HttpPost("MaintenanceJobPlanned")]
+        [Topic(DaprSubName, "MaintenanceJobPlanned")]
+        public async Task HandleAsync(MaintenanceJobPlanned mjp)
         {
-            Log.Information("Register Maintenance Job: {Id}, {Description}, {CustomerId}, {VehicleLicenseNumber}", 
+            Log.Information("Register Maintenance Job: {Id}, {Description}, {CustomerId}, {VehicleLicenseNumber}",
                 mjp.JobId, mjp.Description, mjp.CustomerInfo.Id, mjp.VehicleInfo.LicenseNumber);
 
             MaintenanceJob job = new MaintenanceJob
@@ -104,15 +70,19 @@ namespace Pitstop.InvoiceService
             await _repo.RegisterMaintenanceJobAsync(job);
         }
 
-        private async Task HandleAsync(MaintenanceJobFinished mjf)
+        [HttpPost("MaintenanceJobFinished")]
+        [Topic(DaprSubName, "MaintenanceJobFinished")]
+        public async Task HandleAsync(MaintenanceJobFinished mjf)
         {
-            Log.Information("Finish Maintenance Job: {Id}, {StartTime}, {EndTime}", 
+            Log.Information("Finish Maintenance Job: {Id}, {StartTime}, {EndTime}",
                 mjf.JobId, mjf.StartTime, mjf.EndTime);
 
             await _repo.MarkMaintenanceJobAsFinished(mjf.JobId, mjf.StartTime, mjf.EndTime);
         }
 
-        private async Task HandleAsync(DayHasPassed dhp)
+        [HttpPost("DayHasPassed")]
+        [Topic(DaprSubName, "DayHasPassed")]
+        public async Task HandleAsync(DayHasPassed dhp)
         {
             var jobs = await _repo.GetMaintenanceJobsToBeInvoicedAsync();
             foreach (var jobsPerCustomer in jobs.GroupBy(job => job.CustomerId))
@@ -133,10 +103,12 @@ namespace Pitstop.InvoiceService
                 foreach (var job in jobsPerCustomer)
                 {
                     TimeSpan duration = job.EndTime.Value.Subtract(job.StartTime.Value);
-                    decimal amount = Math.Round((decimal)duration.TotalHours * HOURLY_RATE, 2);
+                    decimal amount = Math.Round((decimal) duration.TotalHours * HOURLY_RATE, 2);
                     totalAmount += amount;
-                    specification.AppendLine($"{job.EndTime.Value.ToString("dd-MM-yyyy")} : {job.Description} on vehicle with license {job.LicenseNumber} - Duration: {duration.TotalHours} hour - Amount: &euro; {amount}");
+                    specification.AppendLine(
+                        $"{job.EndTime.Value.ToString("dd-MM-yyyy")} : {job.Description} on vehicle with license {job.LicenseNumber} - Duration: {duration.TotalHours} hour - Amount: &euro; {amount}");
                 }
+
                 invoice.Specification = specification.ToString();
                 invoice.Amount = totalAmount;
 
@@ -206,6 +178,7 @@ namespace Pitstop.InvoiceService
                     body.AppendLine($"<li>{specificationLine}</li>");
                 }
             }
+
             body.AppendLine("</ol>");
 
 

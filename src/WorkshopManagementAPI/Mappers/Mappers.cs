@@ -11,7 +11,6 @@ namespace Pitstop.WorkshopManagementAPI.Mappers
     public static class Mappers
     {
         public static MaintenanceJobPlanned MapToMaintenanceJobPlanned(this PlanMaintenanceJob source) => new MaintenanceJobPlanned(
-            Guid.NewGuid(),
             source.JobId,
             source.StartTime,
             source.EndTime,
@@ -22,7 +21,6 @@ namespace Pitstop.WorkshopManagementAPI.Mappers
 
         public static MaintenanceJobFinished MapToMaintenanceJobFinished(this FinishMaintenanceJob source) => new MaintenanceJobFinished
         (
-            Guid.NewGuid(),
             source.JobId,
             source.StartTime,
             source.EndTime,

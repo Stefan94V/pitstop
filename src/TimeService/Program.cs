@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Pitstop.Infrastructure.Messaging.Configuration;
 using Serilog;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Pitstop.Infrastructure.Messaging;
 
 namespace Pitstop.TimeService
 {
@@ -36,7 +36,8 @@ namespace Pitstop.TimeService
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.UseRabbitMQMessagePublisher(hostContext.Configuration);
+                    services.AddDaprClient();
+                    services.AddScoped<IMessagePublisher, DaprMessagePublisher>();
 
                     services.AddHostedService<TimeManager>();
                 })

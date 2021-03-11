@@ -5,13 +5,13 @@ namespace Pitstop.InvoiceService.Events
 {
     public class MaintenanceJobPlanned : Event
     {
-        public readonly string JobId;
-        public readonly (string Id, string Name, string TelephoneNumber) CustomerInfo;
-        public readonly (string LicenseNumber, string Brand, string Type) VehicleInfo;
-        public readonly string Description;
+        public string JobId { get; private set; }
+        public (string Id, string Name, string TelephoneNumber) CustomerInfo { get; private set; }
+        public (string LicenseNumber, string Brand, string Type) VehicleInfo { get; private set; }
+        public string Description { get; private set; }
 
-        public MaintenanceJobPlanned(Guid messageId, string jobId, (string Id, string Name, string TelephoneNumber) customerInfo,
-            (string LicenseNumber, string Brand, string Type) vehicleInfo, string description) : base(messageId)
+        public MaintenanceJobPlanned(string jobId, (string Id, string Name, string TelephoneNumber) customerInfo,
+            (string LicenseNumber, string Brand, string Type) vehicleInfo, string description) 
         {
             JobId = jobId;
             CustomerInfo = customerInfo;

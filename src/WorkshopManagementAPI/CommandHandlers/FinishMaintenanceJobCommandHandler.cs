@@ -39,7 +39,7 @@ namespace WorkshopManagementAPI.CommandHandlers
             // publish event
             foreach (var e in events)
             {
-                await _messagePublisher.PublishMessageAsync(e.MessageType, e, "");
+                await _messagePublisher.PublishMessageAsync(e);
             }
 
             // return result

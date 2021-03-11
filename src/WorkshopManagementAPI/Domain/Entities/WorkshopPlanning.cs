@@ -30,7 +30,7 @@ namespace Pitstop.WorkshopManagementAPI.Domain.Entities
         public static WorkshopPlanning Create(DateTime date)
         {
             WorkshopPlanning planning = new WorkshopPlanning(date);
-            WorkshopPlanningCreated e = new WorkshopPlanningCreated(Guid.NewGuid(), date);
+            WorkshopPlanningCreated e = new WorkshopPlanningCreated(date);
             planning.RaiseEvent(e);
             return planning;
         }

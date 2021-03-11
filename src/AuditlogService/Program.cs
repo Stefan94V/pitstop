@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Pitstop.Infrastructure.Messaging.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Pitstop.Infrastructure.Messaging;
 using Serilog;
 
 namespace AuditlogService
@@ -19,7 +19,7 @@ namespace AuditlogService
             var hostBuilder = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.UseRabbitMQMessageHandler(hostContext.Configuration);
+                    services.AddScoped<IMessagePublisher, DaprMessagePublisher>();
 
                     services.AddTransient<AuditlogManagerConfig>((svc) =>
                     {

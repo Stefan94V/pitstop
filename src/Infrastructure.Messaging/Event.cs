@@ -4,22 +4,16 @@ using System.Text;
 
 namespace Pitstop.Infrastructure.Messaging
 {
-    public class Event : Message
+    public class Event 
     {
         public Event()
         {
+            Id = Guid.NewGuid();
+            CreationDate = DateTime.UtcNow;
         }
 
-        public Event(Guid messageId) : base(messageId)
-        {
-        }
+        public Guid Id { get; private set; }
 
-        public Event(string messageType) : base(messageType)
-        {
-        }
-
-        public Event(Guid messageId, string messageType) : base(messageId, messageType)
-        {
-        }
+        public DateTime CreationDate { get; private set; }
     }
 }

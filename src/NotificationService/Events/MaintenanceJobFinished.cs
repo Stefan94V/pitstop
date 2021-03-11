@@ -5,10 +5,9 @@ namespace Pitstop.NotificationService.Events
 {
     public class MaintenanceJobFinished : Event
     {
-        public readonly string JobId;
+        public string JobId { get; private set; }
 
-        public MaintenanceJobFinished(Guid messageId, string jobId) : 
-            base(messageId)
+        public MaintenanceJobFinished(string jobId) 
         {
             JobId = jobId;
         }

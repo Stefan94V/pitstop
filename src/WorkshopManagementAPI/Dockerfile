@@ -1,13 +1,18 @@
 FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build-env
 WORKDIR /app
 
-# Copy necessary files and restore as distinct layer
-COPY *.csproj ./
-RUN dotnet restore
+# Copy necessary files
+COPY Infrastructure.Messaging/Infrastructure.Messaging.csproj ./Infrastructure.Messaging
+RUN dotnet restore Infrastructure.Messaging
+
+# Copy and restore explicit project
+COPY WorkshopManagementAPI/WorkshopManagementAPI.csproj ./WorkshopManagementAPI
+
+RUN dotnet restore WorkshopManagementAPI
 
 # Copy everything else and build
 COPY . ./
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -c Release -o out WorkshopManagementAPI
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:5.0-focal

@@ -5,14 +5,15 @@ namespace Pitstop.InvoiceService.Events
 {
     public class CustomerRegistered : Event
     {
-        public readonly string CustomerId;
-        public readonly string Name;
-        public readonly string Address;
-        public readonly string PostalCode;
-        public readonly string City;
+        public string CustomerId { get; private set; }
+        public string Name { get; private set; }
+        public string Address { get; private set; }
+        public string PostalCode { get; private set; }
+        public string City { get; private set; }
 
 
-        public CustomerRegistered(Guid messageId, string customerId, string name, string address, string postalCode, string city) : base(messageId)
+        public CustomerRegistered(string customerId, string name, string address, string postalCode,
+            string city)
         {
             CustomerId = customerId;
             Name = name;

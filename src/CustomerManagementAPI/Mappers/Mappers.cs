@@ -8,7 +8,6 @@ namespace Pitstop.CustomerManagementAPI.Mappers
     {
         public static CustomerRegistered MapToCustomerRegistered(this RegisterCustomer command) => new CustomerRegistered
         (
-            System.Guid.NewGuid(),
             command.CustomerId,
             command.Name,
             command.Address,

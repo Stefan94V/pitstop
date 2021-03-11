@@ -43,8 +43,8 @@ namespace Pitstop.TimeService
                     Log.Information($"Day has passed!");
                     _lastCheck = DateTime.Now;
                     DateTime passedDay = _lastCheck.AddDays(-1);
-                    DayHasPassed e = new DayHasPassed(Guid.NewGuid());
-                    await _messagePublisher.PublishMessageAsync(e.MessageType, e, "");
+                    DayHasPassed e = new DayHasPassed();
+                    await _messagePublisher.PublishMessageAsync(e);
                 }
                 Thread.Sleep(10000);
             }

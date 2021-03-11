@@ -8,17 +8,17 @@ namespace Pitstop.WorkshopManagementAPI.Events
 {
     public class MaintenanceJobPlanned : Event
     {
-        public readonly Guid JobId;
-        public readonly DateTime StartTime;
-        public readonly DateTime EndTime;
-        public readonly CustomerInfo CustomerInfo;
-        public readonly VehicleInfo VehicleInfo;
-        public readonly string Description;
+        public Guid JobId { get; private set; }
+        public DateTime StartTime { get; private set; }
+        public DateTime EndTime { get; private set; }
+        public CustomerInfo CustomerInfo { get; private set; }
+        public VehicleInfo VehicleInfo { get; private set; }
+        public string Description { get; private set; }
 
-        public MaintenanceJobPlanned(Guid messageId, Guid jobId, DateTime startTime, DateTime endTime,
+        public MaintenanceJobPlanned(Guid jobId, DateTime startTime, DateTime endTime,
             CustomerInfo customerInfo,
             VehicleInfo vehicleInfo,
-            string description) : base(messageId)
+            string description)
         {
             JobId = jobId;
             StartTime = startTime;
