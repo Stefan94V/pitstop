@@ -13,11 +13,6 @@ namespace Pitstop.WorkshopManagementAPI.Commands
         public readonly VehicleInfo VehicleInfo;
         public readonly CustomerInfo CustomerInfo;
         public readonly DateTime EndTime;
-        // public readonly (string Id, string Name, string TelephoneNumber) CustomerInfo;
-        // public readonly (string LicenseNumber, string Brand, string Type) VehicleInfo;
-
-        
-
         public readonly string Description;
 
         public PlanMaintenanceJob(Guid messageId, Guid jobId, DateTime startTime, DateTime endTime,

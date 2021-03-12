@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Pitstop.WorkshopManagementAPI.Repositories;
 using System;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Pitstop.WorkshopManagementAPI.Commands;
@@ -13,21 +14,25 @@ using WorkshopManagementAPI.CommandHandlers;
 using Serilog;
 using Pitstop.WorkshopManagementAPI.Domain.Entities;
 using Pitstop.WorkshopManagementAPI.Mappers;
+using ILogger = Serilog.ILogger;
 
 namespace Pitstop.WorkshopManagementAPI.Controllers
 {
     [Route("/api/[controller]")]
     public class WorkshopPlanningController : Controller
     {
+        private readonly ILogger<WorkshopPlanningController> _logger;
         private readonly IWorkshopPlanningRepository _planningRepo;
         private readonly IPlanMaintenanceJobCommandHandler _planMaintenanceJobCommandHandler;
         private readonly IFinishMaintenanceJobCommandHandler _finishMaintenanceJobCommandHandler;
 
         public WorkshopPlanningController(
+            ILogger<WorkshopPlanningController> logger,
             IWorkshopPlanningRepository planningRepo,
             IPlanMaintenanceJobCommandHandler planMaintenanceJobCommandHandler,
             IFinishMaintenanceJobCommandHandler finishMaintenanceJobCommand)
         {
+            _logger = logger;
             _planningRepo = planningRepo;
             _planMaintenanceJobCommandHandler = planMaintenanceJobCommandHandler;
             _finishMaintenanceJobCommandHandler = finishMaintenanceJobCommand;

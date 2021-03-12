@@ -24,7 +24,7 @@ namespace Pitstop.Infrastructure.Messaging
         {
             var messageType = message.GetType().Name;
             _logger.LogInformation("Publishing {MessageType}", messageType);
-            await _daprClient.PublishEventAsync(PubSubName, messageType, message);
+            await _daprClient.PublishEventAsync(PubSubName, messageType, (dynamic)message);
         }
     }
 }
