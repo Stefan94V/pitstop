@@ -39,8 +39,8 @@ namespace Pitstop.WorkshopManagementEventHandler
             // Add framework services.
             services
                 .AddControllers()
-                .AddDapr();
-            // .AddNewtonsoftJson();
+                .AddDapr()
+                .AddNewtonsoftJson();
 
             // services.AddHealthChecks(checks =>
             // {
@@ -62,7 +62,12 @@ namespace Pitstop.WorkshopManagementEventHandler
             app.UseRouting();
             
 
-            app.UseEndpoints(endpoints => { endpoints.MapSubscribeHandler(); });
+            app.UseEndpoints(endpoint =>
+            {
+                endpoint.MapDefaultControllerRoute();
+                endpoint.MapControllers();
+                endpoint.MapSubscribeHandler();
+            });
         }
     }
 }

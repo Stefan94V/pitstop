@@ -132,7 +132,7 @@ namespace Pitstop.WorkshopManagementEventHandler.Controllers
             {
                 Log.Warning("Skipped adding maintenance job with id {JobId}.", e.JobId);
             }
-        }
+        } 
 
         [HttpPost("MaintenanceJobFinished")]
         [Topic(DaprSubName, "MaintenanceJobFinished")]

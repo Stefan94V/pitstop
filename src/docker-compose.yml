@@ -61,6 +61,7 @@ services:
       - sqlserver
     ports:
       - "5000"
+      - "50001:50001"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
 
@@ -88,6 +89,7 @@ services:
       - sqlserver
     ports:
       - "5100"
+      - "50002:50001"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
 
@@ -115,6 +117,7 @@ services:
       - sqlserver
     ports:
       - "5200"
+      - "50003:50001"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
 
@@ -126,7 +129,7 @@ services:
     "-components-path", "/components",
     "-config", "/configuration/pitstop-config.yaml"]
     depends_on: 
-          - workshopmanagementapi
+      - workshopmanagementapi
     network_mode: "service:workshopmanagementapi"
     volumes:
       - "./dapr/components/:/components"
@@ -152,6 +155,7 @@ services:
       - mailserver
     ports:
       - "5260"
+      - "50004:50001"
     environment:
       - DOTNET_ENVIRONMENT=Production
 
@@ -163,7 +167,7 @@ services:
     "-components-path", "/components",
     "-config", "/configuration/pitstop-config.yaml"]
     depends_on: 
-        - invoiceservice
+      - invoiceservice
     network_mode: "service:invoiceservice"
     volumes:
       - "./dapr/components/:/components"
@@ -180,6 +184,7 @@ services:
       - mailserver
     ports:
       - "5270"
+      - "50007:50001"
     environment:
       - DOTNET_ENVIRONMENT=Production
 
@@ -191,7 +196,7 @@ services:
     "-components-path", "/components",
     "-config", "/configuration/pitstop-config.yaml"]
     depends_on: 
-        - notificationservice
+      - notificationservice
     network_mode: "service:notificationservice"
     volumes:
       - "./dapr/components/:/components"
@@ -234,18 +239,20 @@ services:
       - sqlserver
     ports:
       - "5250"
+      - "50006:50001"
     environment:
       - DOTNET_ENVIRONMENT=Production
 
   workshopmanagementeventhandler-dapr:
     image: "daprio/daprd:latest"
     command: ["./daprd", 
-    "-app-id", "workshopmanagementevent-handler", 
-    "-app-port", "5250", 
-    "-components-path", "/components", 
-    "-config", "/configuration/pitstop-config.yaml"]
+      "-app-id", "workshopmanagementevent-handler", 
+      "-app-port", "5250", 
+      "-components-path", "/components", 
+      "-config", "/configuration/pitstop-config.yaml"
+      ]
     depends_on: 
-        - workshopmanagementeventhandler
+      - workshopmanagementeventhandler
     network_mode: "service:workshopmanagementeventhandler"
     volumes:
       - "./dapr/components/:/components"
@@ -273,7 +280,7 @@ services:
     "-components-path", "/components",
     "-config", "/configuration/pitstop-config.yaml"]
     depends_on: 
-        - customermanagementapi
+      - customermanagementapi
     network_mode: "service:webapp"
     volumes:
       - "./dapr/components/:/components"
@@ -284,5 +291,5 @@ services:
 volumes:
   sqlserverdata:
     external: true    
-  rabbitmqdata:
-    external: true
+  # rabbitmqdata:
+  #   external: true
